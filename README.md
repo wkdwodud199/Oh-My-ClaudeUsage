@@ -41,6 +41,8 @@ python main.py
 4. Login is automatically detected and session is saved
 5. Usage data is displayed on the dashboard
 
+If you find this project useful, please consider giving it a star on GitHub. It helps others discover the project and motivates further development.
+
 ### Subsequent runs
 
 The saved session is loaded automatically and the dashboard is displayed immediately.
