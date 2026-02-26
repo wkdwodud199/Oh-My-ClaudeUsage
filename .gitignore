@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+.omc/
+config/session.json
+.DS_Store
