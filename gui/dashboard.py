@@ -80,6 +80,19 @@ class DashboardWindow(ctk.CTk):
         )
         self.pin_button.pack(side="left", padx=(6, 0), pady=5)
 
+        # GitHub 링크 버튼
+        github_button = ctk.CTkButton(
+            toolbar,
+            text="GitHub",
+            command=self._open_github,
+            width=56, height=26,
+            font=ctk.CTkFont(family="Inter", size=11),
+            fg_color="gray35",
+            hover_color="gray45",
+            corner_radius=6
+        )
+        github_button.pack(side="left", padx=(6, 0), pady=5)
+
         # 투명도 슬라이더
         self.opacity_slider = ctk.CTkSlider(
             toolbar,
@@ -241,6 +254,13 @@ class DashboardWindow(ctk.CTk):
             self.pin_button.configure(fg_color="#4299e1", text="Pin")
         else:
             self.pin_button.configure(fg_color="gray35", text="Pin")
+
+    # ── GitHub ──
+
+    def _open_github(self):
+        """Open GitHub repo in browser"""
+        import webbrowser
+        webbrowser.open("https://github.com/wkdwodud199/Oh-My-ClaudeUsage")
 
     # ── 투명도 ──
 
