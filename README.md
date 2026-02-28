@@ -24,8 +24,9 @@ A real-time GUI dashboard for monitoring your Claude.ai usage limits.
 
 ```bash
 pip install -r requirements.txt
-python -m playwright install chromium
 ```
+
+> Chromium browser is automatically installed on first run if not already present.
 
 ## Usage
 
@@ -47,6 +48,99 @@ python main.py
 ### Subsequent runs
 
 The saved session is loaded automatically and the dashboard is displayed immediately.
+
+## How It Works
+
+```
+                      python main.py
+                           │
+                ensure_playwright_chromium()
+                (auto-install if missing)
+                           │
+                        App.run()
+              ┌────────────┴────────────┐
+              │                         │
+      session exists              no session
+   (config/session.json)                │
+              │                ┌────────▼─────────┐
+              │                │   LoginWindow     │
+              │                │   (login prompt)  │
+              │                └────────┬─────────┘
+              │                         │
+              │                ┌────────▼──────────────┐
+              │                │  Playwright Browser    │
+              │                │  (headless=False)      │
+              │                │  open claude.ai        │
+              │                │  → user signs in       │
+              │                │  → detect cookies      │
+              │                │  → save session.json   │
+              │                └────────┬──────────────┘
+              │                         │
+              ├─────────────────────────┘
+              │
+     ┌────────▼──────────────┐
+     │   start_monitoring     │
+     │   (background thread)  │
+     └────────┬──────────────┘
+              │
+     ┌────────▼──────────────────┐
+     │  Playwright Browser       │
+     │  (headless=True, persist) │
+     │  inject cookies           │
+     └────────┬──────────────────┘
+              │
+              │  ◄── every 1 min ──┐
+              │                    │
+     ┌────────▼──────────────────┐ │
+     │  Claude API calls         │ │
+     │                           │ │
+     │  1. GET /api/organizations│ │
+     │     → get org_id (cached) │ │
+     │                           │ │
+     │  2. GET /api/organizations│ │
+     │     /{org_id}/usage       │ │
+     │     → usage JSON response │ │
+     └────────┬──────────────────┘ │
+              │                    │
+     ┌────────▼──────────────────┐ │
+     │  Parse usage data         │ │
+     │                           │ │
+     │  • five_hour              │ │
+     │    → current session %    │ │
+     │  • seven_day              │ │
+     │    → weekly all models %  │ │
+     │  • seven_day_sonnet       │ │
+     │    → weekly sonnet %      │ │
+     └────────┬──────────────────┘ │
+              │                    │
+     ┌────────▼──────────────────┐ │
+     │  Dashboard GUI            │ │
+     │                           │ │
+     │  ┌──────────────────────┐ │ │
+     │  │ Current Session      │ │ │
+     │  │ ██████░░░░ 58%       │ │ │
+     │  │ Resets in 2h 30m     │ │ │
+     │  ├──────────────────────┤ │ │
+     │  │ Weekly All Models    │ │ │
+     │  │ ████░░░░░░ 42%       │ │ │
+     │  ├──────────────────────┤ │ │
+     │  │ Weekly Sonnet        │ │ │
+     │  │ ███░░░░░░░ 31%       │ │ │
+     │  └──────────────────────┘ │ │
+     └────────┬──────────────────┘ │
+              │                    │
+              └── wait 1 min ──────┘
+```
+
+### Why Playwright + Chromium?
+
+Claude.ai is protected by Cloudflare, which blocks simple HTTP requests (e.g. Python `requests` library). A real browser engine (Chromium) is needed to bypass Cloudflare, and Playwright controls that browser programmatically.
+
+| | **Playwright** | **Chromium** |
+|---|---|---|
+| **Role** | Browser automation library (the driver) | Actual browser engine (the car) |
+| **Login** | Opens Chromium with UI, extracts cookies after user signs in | Renders claude.ai, passes Cloudflare |
+| **Usage scraping** | Launches headless Chromium, injects cookies, calls API | Executes the actual HTTP requests |
 
 ## Project Structure
 

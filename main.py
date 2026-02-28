@@ -12,6 +12,7 @@ import functools
 _original_print = print
 print = functools.partial(_original_print, flush=True)
 
+import subprocess
 import threading
 
 from gui.dashboard import DashboardWindow
@@ -117,8 +118,24 @@ class App:
             self.scraper.stop()
 
 
+def ensure_playwright_chromium():
+    """Playwright Chromium 브라우저가 없으면 자동 설치"""
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            p.chromium.launch(headless=True).close()
+    except Exception:
+        print("Chromium 브라우저를 설치합니다...")
+        subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            check=True,
+        )
+        print("✓ Chromium 설치 완료")
+
+
 def main():
     """메인 함수"""
+    ensure_playwright_chromium()
     app = None
     try:
         app = App()
